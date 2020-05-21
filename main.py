@@ -5,9 +5,27 @@ import requests
 from io import BytesIO
 import math
 import os
-from datetime import datetime
+import certifi
+from pymongo import MongoClient
+
+
+def update_file_meta_size(file_url, new_size):
+    # Set correct SSL certificate
+    os.environ['SSL_CERT_FILE'] = certifi.where()
+
+    # Connect to database and collections
+    client = MongoClient(os.getenv('MONGO_DB_CONNECTION_STRING'))
+    cms_database = client.get_database('strapi')
+    upload_collection = cms_database['upload_file']
+
+    for location in ["", "formats.thumbnail.", "formats.small.", "formats.medium.", "formats.large."]:
+        upload_collection.update_one({location + "url": file_url}, {"$set": {location + "width": new_size[0], location + "height": new_size[1]}})
+
+
 
 PIXEL_PREVIEW_WIDTH = 64
+
+
 
 
 # deploy with:
@@ -20,7 +38,7 @@ def test_file_change(data, context):
 
 
 # deploy with:
-# gcloud functions deploy process_file_data --entry-point=process_file_data --runtime python37 --trigger-resource i14-worlds-2021-upload --trigger-event google.storage.object.finalize
+# gcloud functions deploy process_file_data --entry-point=process_file_data --runtime python37 --env-vars-file .env.yaml --trigger-resource i14-worlds-2021-upload --trigger-event google.storage.object.finalize
 def process_file_data(data, context):
     # data (dict): The Cloud Functions event payload.
     # context (google.cloud.functions.Context): Metadata of triggering event.
@@ -84,14 +102,17 @@ def process_image(bucket_name, src_file_name):
 
 
 
-        if img.size != get_snap_size(img.size):
+        if old_size != new_size:
             # Generate cropped version that sufficed aspect ration of pixel image
             print("cropping ...")
-            img.crop(get_crop_region(img.size)).save(tmp_path_crop)
+            img.crop(get_crop_region(old_size)).save(tmp_path_crop)
 
             # Upload Cropped Version
             print("uploading cropped version ...")
             src_blob.upload_from_filename(tmp_path_crop)
+
+            # Update size-metadata in strapi database
+            update_file_meta_size(file_url, new_size)
 
 
 

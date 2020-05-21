@@ -10,3 +10,5 @@ secrets.py
 .idea
 __pycache__
 .DS_Store
+
+.env.yaml
