@@ -5,3 +5,8 @@ service-account.json
 tmp.*
 examples
 secrets.py
+
+.gitignore
+.idea
+__pycache__
+.DS_Store

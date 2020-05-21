@@ -5,28 +5,38 @@ import requests
 from io import BytesIO
 import math
 import os
+from datetime import datetime
 
 PIXEL_PREVIEW_WIDTH = 64
 
 
-# (just a cloud-functions-hello-world)
 # deploy with:
-# gcloud functions deploy print_file_data --entry-point=print_file_data --runtime python37
-# --trigger-resource i14-worlds-2021-upload --trigger-event google.storage.object.finalize
-def print_file_data(data, context):
+# gcloud functions deploy test_file_change --entry-point=test_file_change --runtime python37 --trigger-resource i14-worlds-2021-upload --trigger-event google.storage.object.finalize
+def test_file_change(data, context):
     # data (dict): The Cloud Functions event payload.
     # context (google.cloud.functions.Context): Metadata of triggering event.
-    print(f"File: /{data['name']}")
+    # print(f"File: /{data['name']}")
+    print(f"data={data}, context={context}")
 
 
 # deploy with:
-# gcloud functions deploy process_file_data --entry-point=process_file_data --runtime python37
-# --trigger-resource i14-worlds-2021-upload --trigger-event google.storage.object.finalize
+# gcloud functions deploy process_file_data --entry-point=process_file_data --runtime python37 --trigger-resource i14-worlds-2021-upload --trigger-event google.storage.object.finalize
 def process_file_data(data, context):
     # data (dict): The Cloud Functions event payload.
     # context (google.cloud.functions.Context): Metadata of triggering event.
-    process_image(data['bucket'], data['name'])
-    print(f"File: /{data['name']}")
+
+    # Prevent infinite processing loops!!!
+    # Does not work, stupid gcloud storage :(
+    # Object including its "created at" and "updated at"
+    # properties get
+    now = datetime.utcnow()
+    last_updated_string = data['updated']
+    last_updated = datetime.strptime(last_updated_string[:10] + " " + last_updated_string[11:-5], '%Y-%m-%d %H:%M:%S')
+
+    if (now - last_updated).seconds > 30:
+        process_image(data['bucket'], data['name'])
+    else:
+        print(f"Cooldown time required for file {data['name']}")
 
 
 # read logs with (takes approx 20-30 seconds until the logs show up):
@@ -41,8 +51,8 @@ def process_image(bucket_name, src_file_name):
     file_extension = src_file_name.split(".")[-1]
     file_name = src_file_name.split(".")[-2]
 
-    tmp_path_crop = "./tmp-crop." + file_extension
-    tmp_path_pixel = "./tmp-pixel." + file_extension
+    tmp_path_crop = "/tmp/tmp-crop." + file_extension
+    tmp_path_pixel = "/tmp/tmp-pixel." + file_extension
 
     if file_extension in ["jpg", "jpeg", "png", "gif"] and not ends_with(file_name, "-pixel-preview"):
 
@@ -64,26 +74,31 @@ def process_image(bucket_name, src_file_name):
         print(f"PixelPreview Size = {get_resize_region(img.size)}")
 
         # Generate cropped version that sufficed aspect ration of pixel image
+        print("cropping ...")
         img.crop(get_crop_region(img.size)).save(tmp_path_crop)
 
         # Generate pixel preview version
+        print("resizing ...")
         img.resize(get_resize_region(img.size), resample=Image.LANCZOS).save(tmp_path_pixel)
 
         # Upload Cropped Version
+        print("uploading cropped version ...")
         src_blob.upload_from_filename(tmp_path_crop)
 
         # Upload Pixel Preview Version
+        print("uploading pixeled version ...")
         dst_blob.upload_from_filename(tmp_path_pixel)
 
         # TODO: Update the metadata in any database where this upload is logged (e.g. strapi cms)
 
         # Remove temporary files
-        os.remove(tmp_path_crop)
-        os.remove(tmp_path_pixel)
+        print("removing local storage ...")
+        # os.remove(tmp_path_crop)
+        # os.remove(tmp_path_pixel)
 
-        print(f"New pixel-preview for /{src_file_name}\n")
+        print(f"New pixel-preview for file {src_file_name}")
     else:
-        print(f"\nNo pixel-preview for videos: /{src_file_name}\n")
+        print(f"No pixel-preview for file {src_file_name} due to invalid file extension")
 
 
 def ends_with(string, ending):
