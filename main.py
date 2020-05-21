@@ -48,23 +48,7 @@ def process_image(bucket_name, src_file_name):
         response = requests.get(file_url)
         img = Image.open(BytesIO(response.content))
 
-        """
-        # Generate examples for different interpolation functions:
-        
-        for iteration in [
-            {"interpolator": Image.NEAREST, "tmp_path": "./tmp-pixel-nearest"},
-            {"interpolator": Image.BILINEAR, "tmp_path": "./tmp-pixel-bilinear"},
-            {"interpolator": Image.BICUBIC, "tmp_path": "./tmp-pixel-bicubic"},
-            {"interpolator": Image.LANCZOS, "tmp_path": "./tmp-pixel-lanczos"},
-        ]:
-            
-            # I have to resize them to the original size because Github strips away all inline styles from markdown.
-            # Therefore i cannot disable interpolation in the displayed html version of the README.md
-            # In a regular HTML this is no problem -> See React component implementation
-            
-            img.resize((PIXEL_PREVIEW_WIDTH, int(PIXEL_PREVIEW_WIDTH * (img.size[1]/img.size[0]))), resample=iteration["interpolator"])\
-                .resize(img.size, resample=0).save(iteration["tmp_path"] + "." + file_extension)
-        """
+        # generate_interpolation_examples(img, file_extension)
 
         print(f"New pixel-preview: /{src_file_name}")
     else:
@@ -78,7 +62,23 @@ def ends_with(string, ending):
         return string[-len(ending):] == ending
 
 
+def generate_pixel_preview_file_path(file_path):
+    # Generate the new filename for pixel preview files
+    # Example: .../image.jpeg -> .../image-pixel-preview.jpeg
+
+    path_list = file_path.split(".")
+
+    new_path_string = ""
+    for string in path_list[:-1]:
+        new_path_string += string
+    new_path_string += "-pixel-preview"     # Insert "-pixel-preview" slice
+    new_path_string += "." + path_list[-1]  # Append extension
+
+    return new_path_string
+
+
 def get_snap_size(size):
+    # size given as (width, height) 2-tuple
     ratio = size[1]/size[0]
 
     new_width = size[0]
@@ -92,6 +92,7 @@ def get_snap_size(size):
 
 
 def get_crop_region(size):
+    # size given as (width, height) 2-tuple
     new_size = get_snap_size(size)
 
     dx = size[0] - new_size[0]
@@ -99,16 +100,32 @@ def get_crop_region(size):
 
     x0 = math.floor(dx/2)
     y0 = math.floor(dy/2)
-
     x1 = size[0] - math.ceil(dx/2)
     y1 = size[1] - math.ceil(dy/2)
 
-    print(size)
-    print((x0, y0, x1, y1))
     return (x0, y0, x1, y1)
 
 
 def get_resize_region(size):
+    # size given as (width, height) 2-tuple
     new_size = get_snap_size(size)
     new_height = int(PIXEL_PREVIEW_WIDTH * (new_size[1]/new_size[0]))
     return (PIXEL_PREVIEW_WIDTH, new_height)
+
+
+def generate_interpolation_examples(img, file_extension):
+    # Generate examples for different interpolation functions:
+
+    for interpolation in [
+        {"interpolator": Image.NEAREST, "tmp_path": "./tmp-pixel-nearest"},
+        {"interpolator": Image.BILINEAR, "tmp_path": "./tmp-pixel-bilinear"},
+        {"interpolator": Image.BICUBIC, "tmp_path": "./tmp-pixel-bicubic"},
+        {"interpolator": Image.LANCZOS, "tmp_path": "./tmp-pixel-lanczos"},
+    ]:
+        # I have to resize them to the original size because Github strips away all inline styles from markdown.
+        # Therefore i cannot disable interpolation in the displayed html version of the README.md
+        # In a regular HTML this is no problem -> See React component implementation
+
+        img.resize((PIXEL_PREVIEW_WIDTH, int(PIXEL_PREVIEW_WIDTH * (img.size[1] / img.size[0]))),
+                   resample=interpolation["interpolator"]) \
+            .resize(img.size, resample=0).save(interpolation["tmp_path"] + "." + file_extension)

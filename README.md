@@ -99,6 +99,7 @@ Calculating the cropped size that suffices a given `PIXEL_PREVIEW_WIDTH`:
 
 ```python
 import math
+
 PIXEL_PREVIEW_WIDTH = 64
 
 def get_snap_size(size):
