@@ -25,18 +25,7 @@ def process_file_data(data, context):
     # data (dict): The Cloud Functions event payload.
     # context (google.cloud.functions.Context): Metadata of triggering event.
 
-    # Prevent infinite processing loops!!!
-    # Does not work, stupid gcloud storage :(
-    # Object including its "created at" and "updated at"
-    # properties get
-    now = datetime.utcnow()
-    last_updated_string = data['updated']
-    last_updated = datetime.strptime(last_updated_string[:10] + " " + last_updated_string[11:-5], '%Y-%m-%d %H:%M:%S')
-
-    if (now - last_updated).seconds > 30:
-        process_image(data['bucket'], data['name'])
-    else:
-        print(f"Cooldown time required for file {data['name']}")
+    process_image(data['bucket'], data['name'])
 
 
 # read logs with (takes approx 20-30 seconds until the logs show up):
@@ -51,8 +40,12 @@ def process_image(bucket_name, src_file_name):
     file_extension = src_file_name.split(".")[-1]
     file_name = src_file_name.split(".")[-2]
 
-    tmp_path_crop = "/tmp/tmp-crop." + file_extension
-    tmp_path_pixel = "/tmp/tmp-pixel." + file_extension
+    if os.getenv("ENVIRONMENT") == "development":
+        tmp_path_crop = "./tmp/tmp-crop." + file_extension
+        tmp_path_pixel = "./tmp/tmp-pixel." + file_extension
+    else:
+        tmp_path_crop = "/tmp/tmp-crop." + file_extension
+        tmp_path_pixel = "/tmp/tmp-pixel." + file_extension
 
     if file_extension in ["jpg", "jpeg", "png", "gif"] and not ends_with(file_name, "-pixel-preview"):
 
@@ -61,6 +54,8 @@ def process_image(bucket_name, src_file_name):
         response = requests.get(file_url)
         img = Image.open(BytesIO(response.content))
 
+
+
         # Connect to google storage bucket
         dst_file_name = generate_pixel_preview_file_path(src_file_name)
         storage_client = storage.Client()
@@ -68,33 +63,46 @@ def process_image(bucket_name, src_file_name):
         src_blob = bucket.blob(src_file_name)
         dst_blob = bucket.blob(dst_file_name)
 
+
+
         # generate_interpolation_examples(img, file_extension)
-        print(f"\nOriginal Size = {img.size}")
-        print(f"New Size = {get_snap_size(img.size)}")
-        print(f"PixelPreview Size = {get_resize_region(img.size)}")
+        old_size = img.size
+        new_size = get_snap_size(old_size)
+        print(f"\nOriginal Size = {old_size}")
+        print(f"New Size = {new_size}")
 
-        # Generate cropped version that sufficed aspect ration of pixel image
-        print("cropping ...")
-        img.crop(get_crop_region(img.size)).save(tmp_path_crop)
 
-        # Generate pixel preview version
+
+        # Generate Pixel Preview version
         print("resizing ...")
-        img.resize(get_resize_region(img.size), resample=Image.LANCZOS).save(tmp_path_pixel)
+        pixel_img = img.resize(get_resize_region(img.size), resample=Image.LANCZOS)
+        pixel_img.save(tmp_path_pixel)
 
-        # Upload Cropped Version
-        print("uploading cropped version ...")
-        src_blob.upload_from_filename(tmp_path_crop)
-
-        # Upload Pixel Preview Version
+        # Upload Pixel Preview version
         print("uploading pixeled version ...")
         dst_blob.upload_from_filename(tmp_path_pixel)
 
-        # TODO: Update the metadata in any database where this upload is logged (e.g. strapi cms)
+
+
+        if img.size != get_snap_size(img.size):
+            # Generate cropped version that sufficed aspect ration of pixel image
+            print("cropping ...")
+            img.crop(get_crop_region(img.size)).save(tmp_path_crop)
+
+            # Upload Cropped Version
+            print("uploading cropped version ...")
+            src_blob.upload_from_filename(tmp_path_crop)
+
+
 
         # Remove temporary files
-        print("removing local storage ...")
-        # os.remove(tmp_path_crop)
-        # os.remove(tmp_path_pixel)
+        if os.getenv("ENVIRONMENT") != "development":
+            os.remove(tmp_path_crop)
+            os.remove(tmp_path_crop)
+
+
+
+        # TODO: Update the metadata (new size) in any database where this upload has been logged (e.g. strapi cms)
 
         print(f"New pixel-preview for file {src_file_name}")
     else:

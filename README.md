@@ -120,14 +120,3 @@ I use the function `get_resize_region` to calculate the PixelPreview size.
 
 I use the function `get_crop_region` to calculate the crop 4-tuple 
 `(x0, y0, x1, y1)` which crops the image in a centered manner.
-
-
-
-
-
-
-
-
-
-
-

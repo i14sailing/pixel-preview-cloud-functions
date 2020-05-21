@@ -2,7 +2,7 @@ venv
 main_test.py
 README.md
 service-account.json
-tmp.*
+/tmp/tmp.*
 examples
 secrets.py
 

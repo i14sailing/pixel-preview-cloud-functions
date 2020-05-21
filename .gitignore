@@ -1,7 +1,6 @@
 venv
 service-account.json
-/tmp-crop.*
-/tmp-pixel.*
+/tmp/tmp*
 .idea
 secrets.py
 
@@ -251,10 +250,6 @@ dist/
 
 # DynamoDB Local files
 .dynamodb/
-
-# Temporary folders
-tmp/
-temp/
 
 ### PyCharm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
