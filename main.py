@@ -1,4 +1,5 @@
 
+from google.cloud import storage
 from PIL import Image
 import requests
 from io import BytesIO
@@ -39,6 +40,7 @@ def process_image(bucket_name, src_file_name):
     file_extension = src_file_name.split(".")[-1]
     file_name = src_file_name.split(".")[-2]
 
+    tmp_path_crop = "./tmp-crop." + file_extension
     tmp_path_pixel = "./tmp-pixel." + file_extension
 
     if file_extension in ["jpg", "jpeg", "png", "gif"] and not ends_with(file_name, "-pixel-preview"):
@@ -48,7 +50,16 @@ def process_image(bucket_name, src_file_name):
         response = requests.get(file_url)
         img = Image.open(BytesIO(response.content))
 
+        # Connect to google storage bucket
+        dst_file_name = generate_pixel_preview_file_path(src_file_name)
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(bucket_name)
+        src_blob = bucket.blob(src_file_name)
+        dst_blob = bucket.blob(dst_file_name)
+
         # generate_interpolation_examples(img, file_extension)
+
+
 
         print(f"New pixel-preview: /{src_file_name}")
     else:
