@@ -4,6 +4,7 @@ from PIL import Image
 import requests
 from io import BytesIO
 import math
+import os
 
 PIXEL_PREVIEW_WIDTH = 64
 
@@ -58,12 +59,31 @@ def process_image(bucket_name, src_file_name):
         dst_blob = bucket.blob(dst_file_name)
 
         # generate_interpolation_examples(img, file_extension)
+        print(f"\nOriginal Size = {img.size}")
+        print(f"New Size = {get_snap_size(img.size)}")
+        print(f"PixelPreview Size = {get_resize_region(img.size)}")
 
+        # Generate cropped version that sufficed aspect ration of pixel image
+        img.crop(get_crop_region(img.size)).save(tmp_path_crop)
 
+        # Generate pixel preview version
+        img.resize(get_resize_region(img.size), resample=Image.LANCZOS).save(tmp_path_pixel)
 
-        print(f"New pixel-preview: /{src_file_name}")
+        # Upload Cropped Version
+        src_blob.upload_from_filename(tmp_path_crop)
+
+        # Upload Pixel Preview Version
+        dst_blob.upload_from_filename(tmp_path_pixel)
+
+        # TODO: Update the metadata in any database where this upload is logged (e.g. strapi cms)
+
+        # Remove temporary files
+        os.remove(tmp_path_crop)
+        os.remove(tmp_path_pixel)
+
+        print(f"New pixel-preview for /{src_file_name}\n")
     else:
-        print(f"No pixel-preview for videos: /{src_file_name}")
+        print(f"\nNo pixel-preview for videos: /{src_file_name}\n")
 
 
 def ends_with(string, ending):

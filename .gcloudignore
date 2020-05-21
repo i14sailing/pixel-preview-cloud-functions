@@ -4,3 +4,4 @@ README.md
 service-account.json
 tmp.*
 examples
+secrets.py

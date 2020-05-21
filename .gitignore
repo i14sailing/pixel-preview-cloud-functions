@@ -3,7 +3,7 @@ service-account.json
 /tmp-crop.*
 /tmp-pixel.*
 .idea
-
+secrets.py
 
 
 
