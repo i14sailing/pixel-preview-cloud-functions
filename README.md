@@ -68,3 +68,60 @@ storage bucket belonging to the same project.
 All cloud function endpoints are located within `main.py`. One can test the
 implementation locally using `main_text.py` but has to include a valid 
 `service-account.json` within the same directory.
+
+
+## Resizing the orignal image?
+
+If I reduce any image with to fixed width of let's say `64px` the aspect ratios
+of the original image an the resulting `64px`-image might differ.
+
+Working with images like `1920x1080`:
+* Original: `1920x1080` with aspect ratio `16:9`
+* PixelPreview: `64x36` with aspect ratio `16:9`
+
+Not working with images like `3000x2000`:
+* Original: `3000x2000` with aspect ratio `3:2`
+* PixelPreview: `64x43` (rounded from `64x42.666`) with aspect ratio `64:43 = 2.9767:2`
+
+<br/>
+
+Idea: Not only generate the PixelPreview but also replace the original image 
+with a cropped version if needed.
+
+<br/>
+
+Calculating the cropped size that suffices a given `PIXEL_PREVIEW_WIDTH`:
+
+```python
+import math
+PIXEL_PREVIEW_WIDTH = 64
+
+def get_snap_size(size):
+    # size given as (width, height) 2-tuple
+
+    ratio = size[1]/size[0]
+    new_width = size[0]
+    new_height = (round(ratio * PIXEL_PREVIEW_WIDTH) / PIXEL_PREVIEW_WIDTH) * size[0]
+    
+    while round(new_height) != new_height:
+        new_width -= 1
+        new_height = (math.floor(ratio * PIXEL_PREVIEW_WIDTH) / PIXEL_PREVIEW_WIDTH) * new_width
+
+    return (new_width, int(new_height))
+```
+
+I use the function `get_resize_region` to calculate the PixelPreview size.
+
+I use the function `get_crop_region` to calculate the crop 4-tuple 
+`(x0, y0, x1, y1)` which crops the image in a centered manner.
+
+
+
+
+
+
+
+
+
+
+
