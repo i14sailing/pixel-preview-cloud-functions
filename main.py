@@ -31,9 +31,6 @@ def process_file_data(data, context):
 
 # ---------------------------------------------------------------------------------------------------------------------
 def process_image(bucket_name, src_file_name):
-    # bucket_name = "your-bucket-name"
-    # source_file_name = "local/path/to/file"
-    # destination_blob_name = "storage-object-name"
 
     file_extension = src_file_name.split(".")[-1]
     file_name = src_file_name.split(".")[-2]
