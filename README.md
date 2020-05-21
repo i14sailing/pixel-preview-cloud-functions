@@ -69,10 +69,13 @@ All cloud function endpoints are located within `main.py`. One can test the
 implementation locally using `main_text.py` but has to include a valid 
 `service-account.json` within the same directory.
 
+<br/>
 
 ## Resizing the orignal image?
 
-If I reduce any image with to fixed width of let's say `64px` the aspect ratios
+### Why is a resize necessary? 
+
+If I reduce any image to a fixed width of let's say `64px` the aspect ratios
 of the original image an the resulting `64px`-image might differ.
 
 Working with images like `1920x1080`:
@@ -89,6 +92,8 @@ Idea: Not only generate the PixelPreview but also replace the original image
 with a cropped version if needed.
 
 <br/>
+
+### Implementation
 
 Calculating the cropped size that suffices a given `PIXEL_PREVIEW_WIDTH`:
 
