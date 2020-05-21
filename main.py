@@ -47,8 +47,23 @@ def process_image(bucket_name, src_file_name):
         response = requests.get(file_url)
         img = Image.open(BytesIO(response.content))
 
-        # Generate pixel preview version
-        img.resize((PIXEL_PREVIEW_WIDTH, int(PIXEL_PREVIEW_WIDTH * (img.size[1]/img.size[0]))), resample=Image.LANCZOS).save(tmp_path_pixel)
+        """
+        # Generate examples for different interpolation functions:
+        
+        for iteration in [
+            {"interpolator": Image.NEAREST, "tmp_path": "./tmp-pixel-nearest"},
+            {"interpolator": Image.BILINEAR, "tmp_path": "./tmp-pixel-bilinear"},
+            {"interpolator": Image.BICUBIC, "tmp_path": "./tmp-pixel-bicubic"},
+            {"interpolator": Image.LANCZOS, "tmp_path": "./tmp-pixel-lanczos"},
+        ]:
+            
+            # I have to resize them to the original size because Github strips away all inline styles from markdown.
+            # Therefore i cannot disable interpolation in the displayed html version of the README.md
+            # In a regular HTML this is no problem -> See React component implementation
+            
+            img.resize((PIXEL_PREVIEW_WIDTH, int(PIXEL_PREVIEW_WIDTH * (img.size[1]/img.size[0]))), resample=iteration["interpolator"])\
+                .resize(img.size, resample=0).save(iteration["tmp_path"] + "." + file_extension)
+        """
 
         print(f"New pixel-preview: /{src_file_name}")
     else:
