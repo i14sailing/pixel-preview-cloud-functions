@@ -10,13 +10,13 @@ I got this idea from the [website of the Sanity CMS ](https://www.sanity.io/blog
 
 ## Example 
 
-Original image (~583 KB):
+Original image (here: ~583 KB):
 
 ![](examples/tmp-crop.jpg)
 
 <br/>
 
-Pixel-Preview image (1.3KB):~
+Pixel-Preview image (here: ~1.3KB):
 
 ![](examples/tmp-pixel-lanczos.jpg)
 
