@@ -3,9 +3,9 @@ service-account.json
 /tmp/tmp*
 .idea
 secrets.py
-
 .env.yaml
-
+*.mov
+playground.py
 
 
 

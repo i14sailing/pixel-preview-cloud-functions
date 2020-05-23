@@ -154,16 +154,24 @@ def generate_pixel_preview_file_path(file_path):
 
 def get_snap_size(size):
     # size given as (width, height) 2-tuple
-    ratio = size[1]/size[0]
+    crop_width = size[0]
+    crop_height = size[1]
 
-    new_width = size[0]
-    new_height = (round(ratio * PIXEL_PREVIEW_WIDTH) / PIXEL_PREVIEW_WIDTH) * size[0]
+    # 1) Calculated floored height of the pixel image (may differ in aspect ratio)
+    pixel_height = math.floor(PIXEL_PREVIEW_WIDTH * (crop_height/crop_width))
 
-    while round(new_height) != new_height:
-        new_width -= 1
-        new_height = (math.floor(ratio * PIXEL_PREVIEW_WIDTH) / PIXEL_PREVIEW_WIDTH) * new_width
+    # 2) Calculated full height with the pixel-image-ratio
+    crop_height = (pixel_height/PIXEL_PREVIEW_WIDTH) * crop_width
 
-    return (new_width, int(new_height))
+    # 3) When that full height is a whole number -> finished
+    while int(crop_height) != crop_height:
+        crop_width -= 1
+        pixel_height = math.floor(PIXEL_PREVIEW_WIDTH * (crop_height / crop_width))
+        crop_height = (pixel_height / PIXEL_PREVIEW_WIDTH) * crop_width
+
+    # The resulting image will have an aspect ratio of 64:1 or 64:2 ... 64:100 or 64:101 ...
+
+    return (crop_width, int(crop_height))
 
 
 def get_crop_region(size):
