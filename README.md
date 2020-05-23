@@ -22,7 +22,7 @@ Pixel-Preview image (here: ~1.3KB):
 
 <br/>
 
-## Which interpolation function?
+## Which downsampling function?
 
 No interpolation/Nearest (here: ~1,6KB):
 
@@ -65,9 +65,9 @@ Example: `.../image.jpeg` -> `.../image-pixel-preview.jpeg`
 I use a cloud function for that which can be easily "hooked onto" a google 
 storage bucket belonging to the same project.
 
-All cloud function endpoints are located within `main.py`. One can test the
-implementation locally using `main_text.py` but has to include a valid 
-`service-account.json` within the same directory.
+All cloud function endpoints are located within `main.py`. You can test the
+implementation locally using `main_test.py` but has to include a valid 
+`service-account.json` from GCP within the same directory.
 
 <br/>
 
@@ -84,7 +84,7 @@ Working with images like `1920x1080`:
 
 Not working with images like `3000x2000`:
 * Original: `3000x2000` with aspect ratio `3:2`
-* PixelPreview: `64x43` (rounded from `64x42.666`) with aspect ratio `64:43 = 2.9767:2`
+* PixelPreview: `64x42`/`64x43` with aspect ratios `64:42 = 3.0476:2`/`64:43 = 2.9767:2`
 
 <br/>
 
@@ -135,12 +135,26 @@ I use the function `get_crop_region` to calculate the crop 4-tuple
 
 The goal is to have a React component `PixelImagePreview` that updates 
 really fast with the `src` of the preview image and loads the actual 
-image after it has been mounted. The result should be that for the 
-loading time the pixel preview image is visible
+image after it has been mounted. The desired result: For the 
+loading time the pixel preview image is visible.
 
 ![](examples/PixelImagePreview.gif)
 
-*Disclaimer: There is probably a better way to asynchronously load 
+For the top white part of these slideshow images the chosen downsampling 
+function lanczos is not ideal! I will have to look for a better one here.
+
+<br/>
+
+## Some Side Notes
+
+*There is probably a better way to asynchronously load 
 images with JS after the placeholder `<img>` tag has been mounted in
-the DOM.Message me if you want to tell me how to improve the 
+the DOM. Message me if you want to tell me how to improve the 
 implementation ;)*
+
+*I am using images for this slideshow instead of a pdf because every 
+js/react pdf library I tried out had a significant bundle size as well 
+as way more runtime overhead than using plain images. In addition to 
+that I am using  the same image slider on the whole page (blog-posts, 
+gallery, slideshows) so if I were to use a pdf then I would have to 
+build a more logic for the  pdf slider.*
