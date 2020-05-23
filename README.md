@@ -123,7 +123,7 @@ I use the function `get_crop_region` to calculate the crop 4-tuple
 
 <br/>
 
-## Implementing a React Component
+## Wrapping the PixelPreview in a React Component
 
 The goal is to have a React component `PixelImagePreview` that updates 
 really fast with the `src` of the preview image and loads the actual 
