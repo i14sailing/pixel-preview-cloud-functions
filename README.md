@@ -130,9 +130,9 @@ The goal is to have a React component that updated really fast with the
 mounted. The result should be that for the loading time the pixel preview
 image is visible
 
-![](examples/PixelImagePreview.mp4)
+![](examples/PixelImagePreview.gif)
 
 *Disclaimer: There is probably a better way to asynchronously load images 
-with JS after the placeholder `<img>` tag has been mounted in the DOM.
+with JS after the placeholder `<img>` tag has been mounted in the DOM.*
 
-Message me if you want to tell me how to improve the implementation ;)*
+*Message me if you want to tell me how to improve the implementation ;)*
