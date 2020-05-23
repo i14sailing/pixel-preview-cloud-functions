@@ -123,16 +123,16 @@ I use the function `get_crop_region` to calculate the crop 4-tuple
 
 <br/>
 
-## Implementing a `PixelImagePreview` React Component
+## Implementing a React Component
 
-The goal is to have a React component that updated really fast with the 
-`src` of the preview image and loads the actual image after it has been
-mounted. The result should be that for the loading time the pixel preview
-image is visible
+The goal is to have a React component `PixelImagePreview` that updates 
+really fast with the `src` of the preview image and loads the actual 
+image after it has been mounted. The result should be that for the 
+loading time the pixel preview image is visible
 
 ![](examples/PixelImagePreview.gif)
 
-*Disclaimer: There is probably a better way to asynchronously load images 
-with JS after the placeholder `<img>` tag has been mounted in the DOM.*
-
-*Message me if you want to tell me how to improve the implementation ;)*
+*Disclaimer: There is probably a better way to asynchronously load 
+images with JS after the placeholder `<img>` tag has been mounted in
+the DOM.Message me if you want to tell me how to improve the 
+implementation ;)*
