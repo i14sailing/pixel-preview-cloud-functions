@@ -7,6 +7,7 @@ import math
 import os
 import certifi
 from pymongo import MongoClient
+from crop import get_snap_size
 
 
 def update_file_meta_size(file_url, new_size):
@@ -93,7 +94,7 @@ def process_image(bucket_name, src_file_name):
 
         # Generate Pixel Preview version
         print("resizing ...")
-        pixel_img = img.resize(get_resize_region(img.size), resample=Image.LANCZOS)
+        pixel_img = img.resize(get_resize_region(new_size), resample=Image.LANCZOS)
         pixel_img.save(tmp_path_pixel)
 
         # Upload Pixel Preview version
@@ -105,7 +106,7 @@ def process_image(bucket_name, src_file_name):
         if old_size != new_size:
             # Generate cropped version that sufficed aspect ration of pixel image
             print("cropping ...")
-            img.crop(get_crop_region(old_size)).save(tmp_path_crop)
+            img.crop(get_crop_region(old_size, new_size)).save(tmp_path_crop)
 
             # Upload Cropped Version
             print("uploading cropped version ...")
@@ -118,7 +119,7 @@ def process_image(bucket_name, src_file_name):
 
         # Remove temporary files
         if os.getenv("ENVIRONMENT") != "development":
-            os.remove(tmp_path_crop)
+            os.remove(tmp_path_pixel)
             os.remove(tmp_path_crop)
 
 
@@ -152,46 +153,22 @@ def generate_pixel_preview_file_path(file_path):
     return new_path_string
 
 
-def get_snap_size(size):
+def get_crop_region(old_size, new_size):
     # size given as (width, height) 2-tuple
-    crop_width = size[0]
-    crop_height = size[1]
 
-    # 1) Calculated floored height of the pixel image (may differ in aspect ratio)
-    pixel_height = math.floor(PIXEL_PREVIEW_WIDTH * (crop_height/crop_width))
-
-    # 2) Calculated full height with the pixel-image-ratio
-    crop_height = (pixel_height/PIXEL_PREVIEW_WIDTH) * crop_width
-
-    # 3) When that full height is a whole number -> finished
-    while int(crop_height) != crop_height:
-        crop_width -= 1
-        pixel_height = math.floor(PIXEL_PREVIEW_WIDTH * (crop_height / crop_width))
-        crop_height = (pixel_height / PIXEL_PREVIEW_WIDTH) * crop_width
-
-    # The resulting image will have an aspect ratio of 64:1 or 64:2 ... 64:100 or 64:101 ...
-
-    return (crop_width, int(crop_height))
-
-
-def get_crop_region(size):
-    # size given as (width, height) 2-tuple
-    new_size = get_snap_size(size)
-
-    dx = size[0] - new_size[0]
-    dy = size[1] - new_size[1]
+    dx = old_size[0] - new_size[0]
+    dy = old_size[1] - new_size[1]
 
     x0 = math.floor(dx/2)
     y0 = math.floor(dy/2)
-    x1 = size[0] - math.ceil(dx/2)
-    y1 = size[1] - math.ceil(dy/2)
+    x1 = old_size[0] - math.ceil(dx/2)
+    y1 = old_size[1] - math.ceil(dy/2)
 
     return (x0, y0, x1, y1)
 
 
-def get_resize_region(size):
+def get_resize_region(new_size):
     # size given as (width, height) 2-tuple
-    new_size = get_snap_size(size)
     new_height = int(PIXEL_PREVIEW_WIDTH * (new_size[1]/new_size[0]))
     return (PIXEL_PREVIEW_WIDTH, new_height)
 
