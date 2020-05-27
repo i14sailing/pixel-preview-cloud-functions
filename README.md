@@ -1,7 +1,7 @@
 
 # Generate Pixel-Preview images using Google Cloud Functions 
 
-The idea is to show very pixeled images (without interpolation) until 
+The idea is to show very low res images, e.g. 64px wide, BUT: without interpolation, until 
 the real image is fully loaded.
 
 I got this idea from the [website of the Sanity CMS ](https://www.sanity.io/blog).
@@ -16,7 +16,7 @@ Original image (here: ~583 KB):
 
 <br/>
 
-Pixel-Preview image (here: ~1.3KB):
+PixelPreview image (here: ~1.3KB):
 
 ![](examples/tmp-pixel-lanczos.jpg)
 
@@ -57,7 +57,7 @@ I am probably going to use lanczos.
 ## Google Cloud Functions
 
 Goal: Every time a new image is uploaded or an existing image is modified a 
-pixel-preview version of that image should be generated and stored in the same 
+PixelPreview version of that image should be generated and stored in the same 
 directory with an appendix like `-pixel-preview`.
 
 Example: `.../image.jpeg` -> `.../image-pixel-preview.jpeg`
@@ -84,7 +84,7 @@ No problem with images like `1920x1080`:
 
 Problematic with images like `3000x2000`:
 * Original: `3000x2000` with aspect ratio `3:2`
-* PixelPreview: `64x42` or `64x43` with aspect ratios `64:42 = 3.0476:2` or `64:43 = 2.9767:2` respectively
+* PixelPreview: `64x42` or `64x43` with aspect ratios `3.0476:2` or `2.9767:2` respectively
 
 <br/>
 
@@ -134,10 +134,8 @@ I use the function `get_crop_region` to calculate the crop 4-tuple
 ### Improving the "get_snap_size"-Algorithm
 
 A way better variant of this Algorithm would be a version that sequentially tested the 
-crop sizes ordered by how many pixels of the image would be lost!
-
-That way the algorithm will always produce the cropped size with the least possible
-lost image area.
+crop sizes ordered by how many pixels of the image would be lost! That way the algorithm 
+will always produce the cropped size with the least possible lost image area.
 
 <br/>
 
@@ -151,8 +149,21 @@ in code in an efficient way.
 So I just implemented a function generating all of these possible sizes up to a certain
 `cutoff` value (`dx,dy < cutoff`) and sorting them: `get_crop_size_options` in `crop.py`.
 
-This function also supports passing it the search-limit from the previous options-list
-so that no options will be checked duplicately.
+This function also supports passing it the cutoff from the previous options-list called
+`prev_cutoff` so that no options will be checked duplicately.
+
+<br/>
+
+The function `suffices_pixel_ratio` just checks whether the PixelPreview of an image has
+the same aspect ration such as the original image:
+
+```python
+def suffices_pixel_ratio(size, pixel_width=64):
+    # size given as a (width, height) 2-tuple
+    scaling_factor = pixel_width/size[0]
+    pixel_height = scaling_factor * size[1]
+    return int(pixel_height) == pixel_height
+```
 
 <br/>
 
@@ -191,13 +202,16 @@ This new version takes significantly longer than the old one. In `crop_playgroun
 you can see how I compared their performance. For a large amount of images I would 
 probably store these computations.
 
-*100.000 random image sizes with width in [400, 4000[ and height in [250, 2500[*
+*Test samples (not super representativ): 100.000 random image sizes with width in 
+`[400, 4000[` and height in `[250, 2500[` .*
 
-The old algorithm:
+<br/>
+
+Average performance of the **old** algorithm:
 * Loss of image area: `~ 4.34%`
 * Time taken: `~ 0.0124ms`
 
-The new algorithm:
+Average performance of the **new** algorithm:
 * Loss of image area: `~ 2.56%` *(optimal)*
 * Time taken: `~ 0.701ms`
 
@@ -205,13 +219,14 @@ So way less loss of image area but about 57 times slower ...
 
 <br/>
 
-What to to about it? Right now, nothing! Why? When taking into account what the rest of the program does it is obvious that +1ms is 
-not a big issue compared to the rest. 
+What to to about it? Right now, nothing! Why? When taking into account what the rest 
+of the program does it is obvious that +0.7ms/image is not a big issue compared to the 
+rest. 
 
-Opening a locally stored image with `PIL` and 
-storing a cropped version of it takes `> 120ms` on the same hardware. In addition to 
-that I am fetching the source image from a storage bucket as well as write into a
-storage bucket two times (in case the image has to be cropped).
+Opening a locally stored image with `PIL` and storing a cropped version of it takes 
+`> 120ms` on the same hardware. In addition to that I am fetching the source image 
+from a storage bucket as well as write into a storage bucket two times (in case the 
+image has to be cropped).
 
 So optimization could definitely be relevant in another setup but not here.
 
