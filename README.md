@@ -4,7 +4,7 @@
 The idea is to show very low res images, e.g. 64px wide, BUT: without interpolation, until 
 the real image is fully loaded.
 
-I got this idea from the [website of the Sanity CMS ](https://www.sanity.io/blog).
+I got this idea from the [website of the Sanity CMS ](https://www.sanity.io/blog). But they don't use it anymore :/
 
 <br/>
 
