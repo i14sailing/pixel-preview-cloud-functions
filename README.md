@@ -155,7 +155,7 @@ This function also supports passing it the cutoff from the previous options-list
 <br/>
 
 The function `suffices_pixel_ratio` just checks whether the PixelPreview of an image has
-the same aspect ration such as the original image:
+the same aspect ratio as the original image:
 
 ```python
 def suffices_pixel_ratio(size, pixel_width=64):
@@ -179,7 +179,7 @@ def get_snap_size(size):
     prev_cutoff = 0
     current_cutoff = 10
 
-    while (prev_cutoff < size[0] and prev_cutoff < size[1]):
+    while (prev_cutoff < max(size)):
 
         size_options = get_crop_size_options(
             size,
